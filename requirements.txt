@@ -1,0 +1,4 @@
+requests==2.31.0
+
+# The newer versions of urllib3 require OpenSSL > 1.1 and do not work with LibreSSL
+urllib3==1.26.6

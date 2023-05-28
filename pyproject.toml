@@ -1,0 +1,28 @@
+[project]
+name = "attachments-fetcher"
+version = "0.0.1"
+authors = [
+    { name = "Dennis Sitelew", email = "yowidin@gmail.com" },
+]
+description = "A tool for downloading embedded images in a Markdown document into a dedicated directory and replacing the image links with the local ones."
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+]
+dynamic = ["dependencies"]
+
+[project.scripts]
+af-make-local = "af.cli:run_fetcher"
+
+[project.urls]
+homepage = "https://github.com/yowidin/attachments-fetcher"
+bugtrack = "https://github.com/yowidin/attachments-fetcher/issues"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
