@@ -3,6 +3,8 @@ import os
 import re
 import requests
 
+from urllib.parse import quote
+
 
 def download_image(url, destination):
     print(f'Downloading: {url}')
@@ -43,7 +45,7 @@ def replace_image_links(md_file: str, output: str, media_dir: str, force: bool):
         download_image(url, image_path)
 
         # Replace the image link with the local file path
-        local_path = f"{media_dir}/{filename}"
+        local_path = quote(f"{media_dir}/{filename}")
         content = content.replace(url, local_path)
 
     # Write the updated content to a new Markdown file
