@@ -1,6 +1,6 @@
 [project]
 name = "attachments-fetcher"
-version = "0.0.1"
+version = "0.1.0"
 authors = [
     { name = "Dennis Sitelew", email = "yowidin@gmail.com" },
 ]
