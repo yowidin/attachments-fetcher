@@ -5,6 +5,8 @@ import requests
 
 from urllib.parse import quote
 
+IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg']
+
 
 def download_image(url, destination):
     print(f'Downloading: {url}')
@@ -28,25 +30,39 @@ def replace_image_links(md_file: str, output: str, media_dir: str, force: bool):
     with open(md_file, 'r') as file:
         content = file.read()
 
-    # Match image links in the Markdown file
-    pattern = r"!\[(.*?)\]\((.*?)\)"
-    matches = re.findall(pattern, content)
+    def replace_by_pattern(pattern: str, file_content):
+        def replace_func(match):
+            alt_text = match.group(1)
+            url = match.group(2)
+            already_local = url.startswith(quote(media_dir))
+            is_image = any(url.lower().endswith(ext) for ext in ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'])
 
-    for alt_text, url in matches:
-        # Check if the URL has an image file extension
-        if not any(url.lower().endswith(ext) for ext in ['.png', '.jpg', '.jpeg', '.gif']):
-            continue
+            if already_local or not is_image:
+                return f'![{alt_text}]({url})'
 
-        # Extract the image filename from the URL
-        filename = url.split("/")[-1]
+            # Extract the image filename from the URL
+            filename = url.split("/")[-1]
 
-        # Download the image
-        image_path = os.path.join(media_dir, filename)
-        download_image(url, image_path)
+            # Download the image
+            image_path = os.path.join(media_dir, filename)
+            download_image(url, image_path)
 
-        # Replace the image link with the local file path
-        local_path = quote(f"{media_dir}/{filename}")
-        content = content.replace(url, local_path)
+            # Replace the image link with the local file path
+            local_path = quote(f"{media_dir}/{filename}")
+
+            return f'![{alt_text}]({local_path})'
+
+        return re.sub(pattern, replace_func, file_content, flags=re.MULTILINE)
+
+    # Replace image links:
+
+    # - [![alt text](url)](url)
+    nested_pattern = r"\[!\[(.*?)\]\((.*?)\)\]\(.*?\)"
+    content = replace_by_pattern(nested_pattern, content)
+
+    # - ![alt text](url)
+    simple_pattern = r"!\[(.*?)\]\((.*?)\)"
+    content = replace_by_pattern(simple_pattern, content)
 
     # Write the updated content to a new Markdown file
     with open(output, 'w') as file:
