@@ -6,6 +6,18 @@ import pytest
 from af.cli import make_local
 
 
+def test_sanitize_filename():
+    bad_symbols = "%*;,+/"
+
+    sanitized = make_local.sanitize_filename("https://example.com/%2A%3B%2C%2B%2F.png")
+
+    for symbol in bad_symbols:
+        assert symbol not in sanitized
+
+    assert sanitized.endswith(".png")
+    assert "https://example.com/" not in sanitized
+
+
 def test_replace_image_links_downloads_and_rewrites(tmp_path, monkeypatch):
     input_md = tmp_path / "doc.md"
     output_md = tmp_path / "out.md"
@@ -34,21 +46,25 @@ def test_replace_image_links_downloads_and_rewrites(tmp_path, monkeypatch):
 
     content = output_md.read_text(encoding="utf-8")
 
-    expected_first = f"[![preview]({quote(str(media_dir / 'pic.jpg'))})](https://example.com/full)"
-    expected_second = f"![preview]({quote(str(media_dir / 'pic.jpg'))})"
-    expected_third = f"![plain]({quote(str(media_dir / 'plain.png'))})"
+    first_name = make_local.sanitize_filename("https://example.com/pic.jpg")
+    second_name = make_local.sanitize_filename("https://example.com/pic.webp")
+    third_name = make_local.sanitize_filename("https://example.com/plain.png")
+
+    expected_first = f"![preview]({quote(f'{media_dir}/{first_name}')})"
+    expected_second = f"![preview]({quote(f'{media_dir}/{second_name}')})"
+    expected_third = f"![plain]({quote(f'{media_dir}/{third_name}')})"
 
     assert expected_first in content
     assert expected_second in content
     assert expected_third in content
     assert calls == [
-        ("https://example.com/pic.jpg", os.path.join(str(media_dir), "pic.jpg")),
-        ("https://example.com/pic.webp", os.path.join(str(media_dir), "pic.webp")),
-        ("https://example.com/plain.png", os.path.join(str(media_dir), "plain.png")),
+        ("https://example.com/pic.jpg", os.path.join(str(media_dir), first_name)),
+        ("https://example.com/pic.webp", os.path.join(str(media_dir), second_name)),
+        ("https://example.com/plain.png", os.path.join(str(media_dir), third_name)),
     ]
-    assert (media_dir / "pic.jpg").is_file()
-    assert (media_dir / "pic.webp").is_file()
-    assert (media_dir / "plain.png").is_file()
+    assert (media_dir / first_name).is_file()
+    assert (media_dir / second_name).is_file()
+    assert (media_dir / third_name).is_file()
 
 
 def test_replace_image_links_skips_local_images(tmp_path, monkeypatch):

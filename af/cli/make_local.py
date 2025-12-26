@@ -1,11 +1,19 @@
 import argparse
+import hashlib
 import os
 import re
 import requests
 
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg']
+
+
+def sanitize_filename(url: str) -> str:
+    parsed = urlparse(url)
+    _, ext = os.path.splitext(parsed.path)
+    hash_part = hashlib.md5(url.encode('utf-8')).hexdigest()
+    return f'{hash_part}{ext}' if ext else hash_part
 
 
 def download_image(url, destination):
@@ -43,7 +51,7 @@ def replace_image_links(md_file: str, output: str, media_dir: str, force: bool):
                 return f'![{alt_text}]({url})'
 
             # Extract the image filename from the URL
-            filename = url.split("/")[-1]
+            filename = sanitize_filename(url)
 
             # Download the image
             image_path = os.path.join(media_dir, filename)
