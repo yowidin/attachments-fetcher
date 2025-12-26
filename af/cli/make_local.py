@@ -1,11 +1,19 @@
 import argparse
+import hashlib
 import os
 import re
 import requests
 
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg']
+
+
+def sanitize_filename(url: str) -> str:
+    parsed = urlparse(url)
+    _, ext = os.path.splitext(parsed.path)
+    hash_part = hashlib.md5(url.encode('utf-8')).hexdigest()
+    return f'{hash_part}{ext}' if ext else hash_part
 
 
 def download_image(url, destination):
@@ -34,6 +42,8 @@ def replace_image_links(md_file: str, output: str, media_dir: str, force: bool):
         def replace_func(match):
             alt_text = match.group(1)
             url = match.group(2)
+            target = match.group(3) if len(match.groups()) > 2 else None
+
             already_local = url.startswith(quote(media_dir))
             is_image = any(url.lower().endswith(ext) for ext in ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'])
 
@@ -41,7 +51,7 @@ def replace_image_links(md_file: str, output: str, media_dir: str, force: bool):
                 return f'![{alt_text}]({url})'
 
             # Extract the image filename from the URL
-            filename = url.split("/")[-1]
+            filename = sanitize_filename(url)
 
             # Download the image
             image_path = os.path.join(media_dir, filename)
@@ -50,14 +60,17 @@ def replace_image_links(md_file: str, output: str, media_dir: str, force: bool):
             # Replace the image link with the local file path
             local_path = quote(f"{media_dir}/{filename}")
 
-            return f'![{alt_text}]({local_path})'
+            if target is None or target == url:
+                return f'![{alt_text}]({local_path})'
+            else:
+                return f'[![{alt_text}]({local_path})]({target})'
 
         return re.sub(pattern, replace_func, file_content, flags=re.MULTILINE)
 
     # Replace image links:
 
     # - [![alt text](url)](url)
-    nested_pattern = r"\[!\[(.*?)\]\((.*?)\)\]\(.*?\)"
+    nested_pattern = r"\[!\[(.*?)\]\((.*?)\)\]\((.*?)\)"
     content = replace_by_pattern(nested_pattern, content)
 
     # - ![alt text](url)
