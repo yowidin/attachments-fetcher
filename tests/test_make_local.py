@@ -32,7 +32,10 @@ def test_replace_image_links_downloads_and_rewrites(tmp_path, monkeypatch):
 
     calls = []
 
-    def fake_download(url, destination):
+    def fake_download(url, destination, force):
+        if os.path.exists(destination) and not force:
+            return
+
         calls.append((url, destination))
         os.makedirs(os.path.dirname(destination), exist_ok=True)
         with open(destination, "wb") as f:
