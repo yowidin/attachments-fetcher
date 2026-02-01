@@ -16,7 +16,11 @@ def sanitize_filename(url: str) -> str:
     return f'{hash_part}{ext}' if ext else hash_part
 
 
-def download_image(url, destination):
+def download_image(url, destination, force):
+    if os.path.exists(destination) and not force:
+        print(f'File {destination} already exists, skipping.')
+        return
+
     print(f'Downloading: {url}')
     response = requests.get(url, stream=True)
     if response.status_code == 200:
@@ -55,7 +59,7 @@ def replace_image_links(md_file: str, output: str, media_dir: str, force: bool):
 
             # Download the image
             image_path = os.path.join(media_dir, filename)
-            download_image(url, image_path)
+            download_image(url, image_path, force)
 
             # Replace the image link with the local file path
             local_path = quote(f"{media_dir}/{filename}")
