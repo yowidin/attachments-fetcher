@@ -2,9 +2,11 @@ import argparse
 import hashlib
 import os
 import re
-import requests
 
+import requests
 from urllib.parse import quote, urlparse
+
+from af import __version__
 
 IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg']
 
@@ -91,6 +93,7 @@ def replace_image_links(md_file: str, output: str, media_dir: str, force: bool):
 
 def main():
     parser = argparse.ArgumentParser('Attachments Fetcher')
+    parser.add_argument('--version', action='version', version=__version__)
     parser.add_argument('--input', '-i', type=str, required=True, help='Input file')
     parser.add_argument('--output', '-o', type=str, required=True, help='Output file')
     parser.add_argument('--media-dir', '-m', type=str, required=True, help='Directory to store downloaded images')
