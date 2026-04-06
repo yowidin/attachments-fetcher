@@ -49,7 +49,7 @@ def replace_image_links(md_file: str, output: str, media_dir: str, force: bool):
             target = match.group(3) if len(match.groups()) > 2 else None
 
             already_local = url.startswith(quote(media_dir))
-            is_image = any(url.lower().endswith(ext) for ext in ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'])
+            is_image = any(url.lower().endswith(ext) for ext in IMAGE_EXTENSIONS)
 
             if already_local or not is_image:
                 return f'![{alt_text}]({url})'

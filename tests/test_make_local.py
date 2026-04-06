@@ -101,3 +101,25 @@ def test_replace_image_links_errors_when_output_exists_without_force(tmp_path):
         make_local.replace_image_links(
             str(input_md), str(output_md), str(media_dir), force=False
         )
+
+
+def test_image_extensions_support(tmp_path, monkeypatch):
+    input_md = tmp_path / "doc.md"
+    output_md = tmp_path / "out.md"
+    media_dir = tmp_path / "media"
+
+    from af.cli.make_local import IMAGE_EXTENSIONS, sanitize_filename
+    urls = [f'https://example.com/test{ext}' for ext in IMAGE_EXTENSIONS]
+    links = [f'![plain]({url})\n' for url in urls]
+
+    input_md.write_text("\n".join(links), encoding="utf-8")
+
+    download_calls = []
+    monkeypatch.setattr(make_local, "download_image",
+                        lambda url, destination, force: download_calls.append(destination))
+
+    make_local.replace_image_links(str(input_md), str(output_md), str(media_dir), force=False)
+
+    content = output_md.read_text(encoding="utf-8")
+
+    assert download_calls == [os.path.join(media_dir, sanitize_filename(x)) for x in urls]
